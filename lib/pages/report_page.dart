@@ -75,10 +75,9 @@ class _ReportPageState extends State<ReportPage> {
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.primaryColorLight,
-                    AppColors.primaryColor,
-                    AppColors.limeGreen,
+                    AppColors.primaryColorDark,
                   ],
-                  stops: [0.0, 0.3, 1.0],
+                  stops: [0.0, 1.0],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -399,8 +398,11 @@ class _ReportPageState extends State<ReportPage> {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [AppColors.primaryColorLight, AppColors.primaryColor, AppColors.limeGreen],
-                              stops: [0.0, 0.3, 1.0],
+                              colors: [
+                                AppColors.primaryColorLight,
+                                AppColors.primaryColorDark,
+                              ],
+                              stops: [0.0, 1.0],
                             ),
                           ),
                           child: ElevatedButton(

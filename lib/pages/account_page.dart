@@ -525,7 +525,7 @@ class _AccountPageState extends State<AccountPage> {
             const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.primaryColorLight, AppColors.primaryColor, AppColors.limeGreen],
+              colors: [AppColors.primaryColorLight, AppColors.primaryColor, AppColors.accentColor],
               stops: [0.0, 0.2, 1.0],
             ),
       ),

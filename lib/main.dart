@@ -64,11 +64,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             colors: [
               AppColors.primaryColorLight,
               AppColors.primaryColor,
-              AppColors.limeGreen,
+              AppColors.primaryColorDark,  // ganti dari accentColor
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            stops: [0.0, 0.2, 1.0],
+            stops: [0.0, 0.5, 1.0],  // sesuaikan stops juga
           ),
         ),
         child: BottomNavigationBar(

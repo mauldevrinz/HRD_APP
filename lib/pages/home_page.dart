@@ -1,3 +1,6 @@
+// account_page.dart - Updated version
+// Replace AppColors.limeGreen with AppColors.accentColor
+
 import 'package:app/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -214,9 +217,9 @@ class _HomePageState extends State<HomePage> {
                             colors: [
                               AppColors.primaryColorLight,
                               AppColors.primaryColor,
-                              AppColors.limeGreen,
+                              AppColors.primaryColorDark,
                             ],
-                            stops: [0.0, 0.2, 1.0],
+                            stops: [0.0, 0.5, 1.0],
                           ),
                         ),
                         child: ElevatedButton(
@@ -279,9 +282,9 @@ class _HomePageState extends State<HomePage> {
                             colors: [
                               AppColors.primaryColorLight,
                               AppColors.primaryColor,
-                              AppColors.limeGreen,
+                              AppColors.primaryColorDark,
                             ],
-                            stops: [0.0, 0.2, 1.0],
+                            stops: [0.0, 0.5, 1.0],
                           ),
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(30),
@@ -723,9 +726,9 @@ class _HomePageState extends State<HomePage> {
                             colors: [
                               AppColors.primaryColorLight,
                               AppColors.primaryColor,
-                              AppColors.limeGreen,
+                              AppColors.primaryColorDark,
                             ],
-                            stops: [0.0, 0.2, 1.0],
+                            stops: [0.0, 0.5, 1.0],
                           ),
                         ),
                         child: ElevatedButton(
