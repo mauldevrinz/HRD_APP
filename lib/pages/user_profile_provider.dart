@@ -1,30 +1,208 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class UserProfile {
   String name;
   String email;
   String? photoUrl;
+  String? department;
+  String? employeeId;
+  String role;
 
   UserProfile({
     required this.name,
     required this.email,
     this.photoUrl,
+    this.department,
+    this.employeeId,
+    this.role = 'employee',
   });
+
+  factory UserProfile.fromMap(Map<String, dynamic> map) {
+    return UserProfile(
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      photoUrl: map['photoUrl'],
+      department: map['department'],
+      employeeId: map['employeeId'],
+      role: map['role'] ?? 'employee',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'email': email,
+      'photoUrl': photoUrl,
+      'department': department,
+      'employeeId': employeeId,
+      'role': role,
+    };
+  }
 }
 
 class UserProfileProvider extends ChangeNotifier {
-  UserProfile _userProfile = UserProfile(
-    name: 'Fatimatuz Zahro',
-    email: 'ahmad.maulana@example.com',
-    photoUrl: 'https://via.placeholder.com/50',
-  );
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  
+  UserProfile? _userProfile;
+  bool _isLoading = false;
 
-  UserProfile get userProfile => _userProfile;
+  UserProfile? get userProfile => _userProfile;
+  bool get isLoading => _isLoading;
 
-  void updateProfile({String? name, String? email, String? photoUrl}) {
-    if (name != null) _userProfile.name = name;
-    if (email != null) _userProfile.email = email;
-    if (photoUrl != null) _userProfile.photoUrl = photoUrl;
+  // Load user profile from Firestore
+  Future<void> loadUserProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        _userProfile = UserProfile.fromMap(doc.data()!);
+        await _saveToLocalStorage();
+      } else {
+        // Document doesn't exist, create default profile from Firebase Auth
+        debugPrint('User document not found, creating default profile');
+        _userProfile = UserProfile(
+          name: user.displayName ?? user.email?.split('@')[0] ?? 'User',
+          email: user.email ?? '',
+          role: 'employee',
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      // Try to load from local storage or create default
+      await _loadFromLocalStorage();
+      if (_userProfile == null && user.email != null) {
+        _userProfile = UserProfile(
+          name: user.displayName ?? user.email?.split('@')[0] ?? 'User',
+          email: user.email ?? '',
+          role: 'employee',
+        );
+      }
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Update profile in Firestore
+  Future<bool> updateProfile({
+    String? name,
+    String? email,
+    String? photoUrl,
+    String? department,
+    String? employeeId,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    try {
+      final updates = <String, dynamic>{};
+      if (name != null) updates['name'] = name;
+      if (email != null) updates['email'] = email;
+      if (photoUrl != null) updates['photoUrl'] = photoUrl;
+      if (department != null) updates['department'] = department;
+      if (employeeId != null) updates['employeeId'] = employeeId;
+
+      await _firestore.collection('users').doc(user.uid).update(updates);
+
+      // Update local profile
+      if (_userProfile != null) {
+        if (name != null) _userProfile!.name = name;
+        if (email != null) _userProfile!.email = email;
+        if (photoUrl != null) _userProfile!.photoUrl = photoUrl;
+        if (department != null) _userProfile!.department = department;
+        if (employeeId != null) _userProfile!.employeeId = employeeId;
+        
+        await _saveToLocalStorage();
+        notifyListeners();
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Error updating profile: $e');
+      return false;
+    }
+  }
+
+  // Upload profile photo
+  Future<String?> uploadProfilePhoto(File imageFile) async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      final ref = _storage.ref().child('profile_photos/${user.uid}.jpg');
+      await ref.putFile(imageFile);
+      final url = await ref.getDownloadURL();
+      
+      await updateProfile(photoUrl: url);
+      return url;
+    } catch (e) {
+      debugPrint('Error uploading photo: $e');
+      return null;
+    }
+  }
+
+  // Save to local storage for offline access
+  Future<void> _saveToLocalStorage() async {
+    if (_userProfile == null) return;
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_name', _userProfile!.name);
+      await prefs.setString('user_email', _userProfile!.email);
+      if (_userProfile!.photoUrl != null) {
+        await prefs.setString('user_photo', _userProfile!.photoUrl!);
+      }
+      if (_userProfile!.department != null) {
+        await prefs.setString('user_department', _userProfile!.department!);
+      }
+      if (_userProfile!.employeeId != null) {
+        await prefs.setString('user_employee_id', _userProfile!.employeeId!);
+      }
+      await prefs.setString('user_role', _userProfile!.role);
+    } catch (e) {
+      debugPrint('Error saving to local storage: $e');
+    }
+  }
+
+  // Load from local storage
+  Future<void> _loadFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString('user_name');
+      final email = prefs.getString('user_email');
+      
+      if (name != null && email != null) {
+        _userProfile = UserProfile(
+          name: name,
+          email: email,
+          photoUrl: prefs.getString('user_photo'),
+          department: prefs.getString('user_department'),
+          employeeId: prefs.getString('user_employee_id'),
+          role: prefs.getString('user_role') ?? 'employee',
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading from local storage: $e');
+    }
+  }
+
+  // Clear profile (on logout)
+  Future<void> clearProfile() async {
+    _userProfile = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
     notifyListeners();
   }
 }

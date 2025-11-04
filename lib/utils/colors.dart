@@ -8,6 +8,8 @@ class AppColors {
   static const Color textColor = Color(0xFF2C3E50);
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color offWhite = Color(0xFFFFFBF0);      // Putih tulang / Cream
+  static const Color limeGreen = Color(0xFF8FBC8F);      // Fallback color
 
   static MaterialColor createMaterialColor(Color color) {
     List strengths = <double>[.05];

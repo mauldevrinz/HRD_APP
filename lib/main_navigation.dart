@@ -32,17 +32,15 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryColorLight,
-              AppColors.primaryColor,
-              AppColors.limeGreen,
-            ],
-            stops: [0.0, 0.2, 1.0],
-          ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
@@ -60,8 +58,8 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor: AppColors.white,
-          unselectedItemColor: AppColors.white.withOpacity(0.7),
+          selectedItemColor: AppColors.primaryColor,
+          unselectedItemColor: AppColors.textColor.withOpacity(0.5),
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
