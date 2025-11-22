@@ -57,8 +57,8 @@ Before you start, ensure you have the following installed:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd app
+git clone https://github.com/mauldevrinz/HRD_APP.git
+cd HRD_APP
 ```
 
 ### Step 2: Install Flutter Dependencies
