@@ -1,5 +1,5 @@
-name: app
-description: A new Flutter project.
+name: hrd_app
+description: A comprehensive Flutter application for health assessment, wellness testing, and personal health analytics. Includes BMI calculator, Big Five personality test, burnout assessment, reporting system, and admin dashboard with Firebase integration.
 
 publish_to: 'none'
 
