@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primaryColor = Color(0xFF26A69A);
-  static const Color primaryColorLight = Color(0xFF4DB6AC);
-  static const Color primaryColorDark = Color(0xFF00766C);
-  static const Color accentColor = Color(0xFFFFAB40);
+  static const Color primaryColorDark = Color(0xFF154D71);
+  static const Color primaryColor = Color(0xFF1C6EA4);
+  static const Color primaryColorLight = Color(0xFF33A1E0);
+  static const Color accentColor = Color(0xFFFFF9AF);
   static const Color textColor = Color(0xFF2C3E50);
   static const Color backgroundColor = Color(0xFFF5F5F5);
   static const Color white = Color(0xFFFFFFFF);
-  static const Color limeGreen = Color(0xFFAED581);
+  static const Color offWhite = Color(0xFFFFFBF0);      // Putih tulang / Cream
+  static const Color limeGreen = Color(0xFF8FBC8F);      // Fallback color
 
   static MaterialColor createMaterialColor(Color color) {
     List strengths = <double>[.05];
