@@ -10,6 +10,8 @@ import 'pages/home_page.dart';
 import 'pages/report_page.dart';
 import 'pages/account_page.dart';
 import 'pages/auth/splash_screen.dart';
+import 'pages/admin/admin_home_page.dart';
+import 'pages/admin/admin_report_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,12 +74,6 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ReportPage(),
-    const AccountPage(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -95,43 +91,61 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+    return Consumer<UserProfileProvider>(
+      builder: (context, userProfileProvider, child) {
+        final isAdmin = userProfileProvider.userProfile?.role == 'admin';
+        
+        final List<Widget> pages = isAdmin 
+            ? [
+                const AdminHomePage(),
+                const AdminReportPage(),
+                const AccountPage(),
+              ]
+            : [
+                const HomePage(),
+                const ReportPage(),
+                const AccountPage(),
+              ];
+
+        return Scaffold(
+          body: pages[_selectedIndex],
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          selectedItemColor: AppColors.primaryColor,
-          unselectedItemColor: AppColors.textColor.withOpacity(0.5),
-          backgroundColor: Colors.transparent,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
+            child: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              selectedItemColor: AppColors.primaryColor,
+              unselectedItemColor: AppColors.textColor.withOpacity(0.5),
+              backgroundColor: Colors.transparent,
+              type: BottomNavigationBarType.fixed,
+              elevation: 0,
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home),
+                  label: isAdmin ? 'Dashboard' : 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.assessment),
+                  label: isAdmin ? 'Laporan' : 'Report',
+                ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Account',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assessment),
-              label: 'Report',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Account',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

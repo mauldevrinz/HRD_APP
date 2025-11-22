@@ -33,7 +33,7 @@ class _BMITestPageState extends State<BMITestPage> {
       await TestResultStorage.saveTestResult(
         testTitle: 'Tes Body Mass Index',
         status: 'Selesai',
-        iconName: 'local_hospital_outlined',
+        iconName: 'monitor_weight_outlined',
         resultData: {
           'bmi': _bmiResult,
           'category': _bmiCategory,

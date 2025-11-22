@@ -72,24 +72,9 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 40),
                   
                   // Logo Flutter
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryColor.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: FlutterLogo(
-                        size: 80,
-                      ),
+                  const Center(
+                    child: FlutterLogo(
+                      size: 80,
                     ),
                   ),
                   

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'dart:io';
 
 class UserProfile {
@@ -48,7 +48,7 @@ class UserProfile {
 class UserProfileProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final firebase_storage.FirebaseStorage _storage = firebase_storage.FirebaseStorage.instance;
   
   UserProfile? _userProfile;
   bool _isLoading = false;
@@ -102,6 +102,7 @@ class UserProfileProvider extends ChangeNotifier {
     String? photoUrl,
     String? department,
     String? employeeId,
+    bool clearPhoto = false,
   }) async {
     final user = _auth.currentUser;
     if (user == null) return false;
@@ -111,6 +112,7 @@ class UserProfileProvider extends ChangeNotifier {
       if (name != null) updates['name'] = name;
       if (email != null) updates['email'] = email;
       if (photoUrl != null) updates['photoUrl'] = photoUrl;
+      if (clearPhoto) updates['photoUrl'] = null;
       if (department != null) updates['department'] = department;
       if (employeeId != null) updates['employeeId'] = employeeId;
 
@@ -121,6 +123,7 @@ class UserProfileProvider extends ChangeNotifier {
         if (name != null) _userProfile!.name = name;
         if (email != null) _userProfile!.email = email;
         if (photoUrl != null) _userProfile!.photoUrl = photoUrl;
+        if (clearPhoto) _userProfile!.photoUrl = null;
         if (department != null) _userProfile!.department = department;
         if (employeeId != null) _userProfile!.employeeId = employeeId;
         
@@ -138,18 +141,76 @@ class UserProfileProvider extends ChangeNotifier {
   // Upload profile photo
   Future<String?> uploadProfilePhoto(File imageFile) async {
     final user = _auth.currentUser;
-    if (user == null) return null;
+    if (user == null) {
+      debugPrint('User not authenticated');
+      return null;
+    }
 
     try {
-      final ref = _storage.ref().child('profile_photos/${user.uid}.jpg');
-      await ref.putFile(imageFile);
-      final url = await ref.getDownloadURL();
+      // Check file exists
+      if (!await imageFile.exists()) {
+        debugPrint('Image file does not exist');
+        return null;
+      }
+
+      // Check file size (max 5MB)
+      final fileSize = await imageFile.length();
+      if (fileSize > 5 * 1024 * 1024) {
+        debugPrint('File size is too large: $fileSize bytes');
+        return null;
+      }
+
+      debugPrint('Starting upload for user: ${user.uid}');
       
+      final fileName = '${user.uid}.jpg';
+      final ref = _storage.ref('profile_photos').child(fileName);
+      
+      debugPrint('Uploading to: profile_photos/$fileName');
+      
+      final uploadTask = ref.putFile(imageFile);
+      final taskSnapshot = await uploadTask;
+      debugPrint('Upload complete');
+      
+      final url = await ref.getDownloadURL();
+      debugPrint('Got download URL: $url');
+      
+      // Update profile with new URL
       await updateProfile(photoUrl: url);
+      debugPrint('Profile updated with photo URL');
       return url;
     } catch (e) {
       debugPrint('Error uploading photo: $e');
       return null;
+    }
+  }
+
+  // Delete profile photo
+  Future<bool> deleteProfilePhoto() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    try {
+      debugPrint('Starting delete for user: ${user.uid}');
+      
+      final fileName = '${user.uid}.jpg';
+      final ref = _storage.ref('profile_photos').child(fileName);
+      
+      // Try to delete from storage (may not exist, that's ok)
+      try {
+        await ref.delete();
+        debugPrint('Photo deleted from storage');
+      } catch (e) {
+        debugPrint('File may not exist in storage: $e');
+      }
+      
+      // Update profile to remove photoUrl
+      await updateProfile(clearPhoto: true);
+      debugPrint('Profile updated - photo removed');
+      
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting photo: $e');
+      return false;
     }
   }
 

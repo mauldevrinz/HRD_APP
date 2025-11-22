@@ -6,6 +6,8 @@ import 'package:app/utils/test_result_storage.dart';
 import 'admin/admin_dashboard_page.dart';
 import 'package:app/services/auth_service.dart';
 import 'auth/login_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -14,7 +16,7 @@ class AccountPage extends StatefulWidget {
   State<AccountPage> createState() => _AccountPageState();
 }
 
-class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClientMixin {
+class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   bool _notificationsEnabled = true;
   bool _assessmentReminders = true;
   bool _reportUpdates = true;
@@ -34,8 +36,16 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeControllers();
     _loadTestStats();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadTestStats();
+    }
   }
   
   Future<void> _loadTestStats() async {
@@ -59,6 +69,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _emailController.dispose();
     for (final controller in _passwordControllers) {
@@ -332,7 +343,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
                           _buildOptimizedMenuItem(
                             icon: Icons.info_outline,
                             title: 'Tentang Aplikasi',
-                            subtitle: 'Versi 1.0.0 - November 2024',
+                            subtitle: 'Versi 1.0.0',
                             onTap: _showAboutDialog,
                           ),
                         ],
@@ -471,21 +482,6 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Bergabung sejak November 2024',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.primaryColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
           
           const SizedBox(height: 20),
           
@@ -932,29 +928,6 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                'Berikan rating:',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ...List.generate(5, (index) => GestureDetector(
-                onTap: () {},
-                child: Icon(
-                  Icons.star_border,
-                  color: Colors.amber,
-                  size: 20,
-                ),
-              )),
-            ],
-          ),
           const SizedBox(height: 24),
           _buildDialogActions(
             onCancel: () => Navigator.pop(context),
@@ -975,32 +948,27 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
         'title': 'Panduan Pengguna',
         'icon': Icons.book_outlined,
         'subtitle': 'Cara menggunakan aplikasi',
+        'content': 'MEMULAI:\n• Buat akun dengan email dan password Anda\n• Verifikasi email Anda untuk mengaktifkan akun\n• Lengkapi profil Anda dengan foto dan informasi pribadi\n\nMELAKUKAN TES:\n• Pilih test yang ingin Anda lakukan dari halaman utama\n• Baca deskripsi test sebelum memulai\n• Jawab semua pertanyaan dengan jujur dan sesuai dengan kondisi Anda\n• Hasil akan ditampilkan setelah test selesai\n\nMENGAKSES HASIL:\n• Semua hasil test tersimpan di profil Anda\n• Anda dapat melihat history dan trend hasil test\n• Bagikan laporan dengan fitur export'
       },
       {
-        'title': 'FAQ',
+        'title': 'FAQ - Pertanyaan Umum',
         'icon': Icons.help_outline,
-        'subtitle': 'Pertanyaan yang sering diajukan',
+        'subtitle': 'Jawaban atas pertanyaan umum',
+        'content': 'T: Berapa lama hasil test disimpan?\nJ: Hasil test disimpan selamanya di akun Anda dan dapat diakses kapan saja.\n\nT: Bisakah saya mengubah jawaban test saya?\nJ: Tidak, setelah test selesai jawaban tidak dapat diubah. Anda dapat mengulang test kapan saja.\n\nT: Berapa sering saya harus mengulang test?\nJ: Anda dapat mengulangi test kapan saja. Direkomendasikan setiap 1-3 bulan untuk melihat perkembangan.\n\nT: Apakah data saya aman?\nJ: Ya, semua data dienkripsi dan disimpan dengan aman di server kami.\n\nT: Bisakah saya mengubah foto profil?\nJ: Ya, Anda dapat mengubah foto profil di halaman akun dengan mengklik ikon kamera.\n\nT: Apakah hasil test akurat?\nJ: Test kami menggunakan metodologi ilmiah yang telah terbukti dan dikembangkan oleh ahli.\n\nT: Bisakah saya menghapus akun saya?\nJ: Silakan hubungi support kami untuk permintaan penghapusan akun.'
       },
       {
-        'title': 'Video Tutorial',
-        'icon': Icons.play_circle_outline,
-        'subtitle': 'Tutorial step-by-step',
+        'title': 'FAQ - Tentang Test',
+        'icon': Icons.assignment_outlined,
+        'subtitle': 'Pertanyaan tentang setiap test',
+        'content': 'BMI (BODY MASS INDEX):\n• Mengukur status berat badan ideal berdasarkan tinggi dan berat\n• Waktu: 3 menit\n• Hasil: Kategori berat badan (kurang, normal, berlebih, obese)\n\nBIG FIVE PERSONALITY (OCEAN):\n• Mengukur 5 dimensi kepribadian utama\n• Waktu: 10 menit\n• Hasil: Skor untuk setiap dimensi kepribadian\n\nBURNOUT TEST:\n• Mengukur tingkat kelelahan dan stres\n• Waktu: 7 menit\n• Hasil: Level burnout (rendah, sedang, tinggi)\n• Tips: Jawab berdasarkan kondisi Anda dalam 1 bulan terakhir'
       },
       {
-        'title': 'Kontak Support',
-        'icon': Icons.support_agent,
-        'subtitle': 'Hubungi tim dukungan',
+        'title': 'Troubleshooting',
+        'icon': Icons.build_outlined,
+        'subtitle': 'Solusi untuk masalah umum',
+        'content': 'MASALAH: Tidak bisa login\n• Pastikan email dan password sudah benar\n• Cek apakah akun sudah terverifikasi\n• Gunakan fitur "Lupa Password" jika perlu\n\nMAASALAH: Test tidak menyimpan hasil\n• Pastikan koneksi internet stabil\n• Coba refresh halaman\n• Hubungi support jika masalah berlanjut\n\nMAASALAH: Foto profil tidak muncul\n• Tunggu beberapa detik untuk proses upload\n• Coba dengan foto yang lebih kecil\n• Hubungi support jika tetap tidak berhasil\n\nMAASALAH: Notifikasi tidak diterima\n• Periksa pengaturan notifikasi di aplikasi\n• Izinkan notifikasi di pengaturan device\n• Pastikan Anda sudah mengaktifkan notifikasi'
       },
-      {
-        'title': 'Lapor Masalah',
-        'icon': Icons.bug_report_outlined,
-        'subtitle': 'Laporkan bug atau masalah',
-      },
-      {
-        'title': 'Komunitas',
-        'icon': Icons.forum_outlined,
-        'subtitle': 'Bergabung dengan komunitas pengguna',
-      },
+
     ];
 
     showDialog(
@@ -1016,13 +984,14 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
           ),
           const SizedBox(height: 20),
           Container(
-            constraints: const BoxConstraints(maxHeight: 300),
+            constraints: const BoxConstraints(maxHeight: 350),
             child: SingleChildScrollView(
               child: Column(
                 children: helpItems.map((item) => _buildHelpTile(
                   item['title'] as String,
                   item['icon'] as IconData,
                   item['subtitle'] as String,
+                  item['content'] as String,
                 )).toList(),
               ),
             ),
@@ -1079,46 +1048,8 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          _buildInfoRow('Tanggal Rilis', 'November 2024'),
           _buildInfoRow('Platform', 'Android, iOS, Web'),
           _buildInfoRow('Ukuran App', '15.2 MB'),
-          _buildInfoRow('Rating', '4.8 ⭐ (1,234 ulasan)'),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Dikembangkan dengan ❤️ oleh',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'mauldevrinz',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Software Developer',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 24),
           Row(
             children: [
@@ -1132,7 +1063,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
                   label: const Text('Lisensi'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
@@ -1327,7 +1258,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    _showSnackBar('Membuka kamera...');
+                    _pickImage(ImageSource.camera);
                   },
                   icon: const Icon(Icons.camera_alt),
                   label: const Text('Kamera'),
@@ -1342,7 +1273,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                    _showSnackBar('Membuka galeri...');
+                    _pickImage(ImageSource.gallery);
                   },
                   icon: const Icon(Icons.photo_library),
                   label: const Text('Galeri'),
@@ -1354,14 +1285,216 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          if (context.read<UserProfileProvider>().userProfile?.photoUrl != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.red.shade600),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Klik tombol Hapus Foto untuk menghapus foto profil Anda',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: 12),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+          Row(
+            children: [
+              if (context.read<UserProfileProvider>().userProfile?.photoUrl != null)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showDeletePhotoConfirmDialog();
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Hapus Foto'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              if (context.read<UserProfileProvider>().userProfile?.photoUrl != null)
+                const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade400,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Batal'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  void _showDeletePhotoConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => _buildOptimizedDialog(
+        icon: Icons.delete_outline,
+        title: 'Hapus Foto Profil',
+        iconColor: Colors.red,
+        children: [
+          Text(
+            'Apakah Anda yakin ingin menghapus foto profil?',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      colors: [Colors.red, Colors.redAccent],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: -10,
+                        right: -10,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            final userProvider = context.read<UserProfileProvider>();
+                            final result = await userProvider.deleteProfilePhoto();
+                            if (result && mounted) {
+                              _showSnackBar('Foto profil berhasil dihapus');
+                            } else if (mounted) {
+                              _showSnackBar('Gagal menghapus foto', isError: true);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Hapus',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (image == null) {
+        _showSnackBar('Tidak ada gambar yang dipilih');
+        return;
+      }
+
+      // Upload ke Firebase Storage
+      await _uploadPhotoToFirebase(image);
+    } catch (e) {
+      _showSnackBar('Error: $e');
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  Future<void> _uploadPhotoToFirebase(XFile imageFile) async {
+    try {
+      _showSnackBar('Mengunggah foto...');
+
+      final userProvider = context.read<UserProfileProvider>();
+      
+      // Convert XFile ke File
+      final file = File(imageFile.path);
+
+      // Upload menggunakan method dari provider
+      final downloadUrl = await userProvider.uploadProfilePhoto(file);
+
+      if (downloadUrl != null) {
+        if (mounted) {
+          _showSnackBar('Foto berhasil diubah!');
+        }
+      } else {
+        if (mounted) {
+          _showSnackBar('Gagal mengunggah foto');
+        }
+      }
+    } catch (e) {
+      _showSnackBar('Error mengunggah foto: $e');
+      debugPrint('Error uploading photo: $e');
+    }
   }
 
   // Reusable Widget Components
@@ -1375,7 +1508,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 16,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 700),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1407,10 +1540,15 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: children,
+                  children: children.length > 1 
+                    ? children.sublist(0, children.length - 1)
+                    : [],
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+            if (children.isNotEmpty)
+              children.last,
           ],
         ),
       ),
@@ -1573,7 +1711,7 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _buildHelpTile(String title, IconData icon, String subtitle) {
+  Widget _buildHelpTile(String title, IconData icon, String subtitle, String content) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -1590,10 +1728,72 @@ class _AccountPageState extends State<AccountPage> with AutomaticKeepAliveClient
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
         onTap: () {
           Navigator.pop(context);
-          _showSnackBar('Membuka $title...');
+          _showHelpContentDialog(title, icon, content);
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         dense: true,
+      ),
+    );
+  }
+
+  void _showHelpContentDialog(String title, IconData icon, String content) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 32,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    content,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.6,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildGradientButton(
+                  text: 'Tutup',
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
